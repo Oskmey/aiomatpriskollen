@@ -2,9 +2,15 @@
 name = "aiomatpriskollen"
 version = "0.0.0"
 description = "Asynchronous Python client for Matpriskollen."
+authors = [
+    {name = "Oskmey",email = "qcube.gaming@gmail.com"}
+]
 license = "MIT"
 requires-python = ">=3.12"
-dependencies = ["aiohttp"]
+dependencies = [
+    "aiohttp (>=3.14.5,<4.0.0)"
+]
+
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
