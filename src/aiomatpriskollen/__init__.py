@@ -1,6 +1,5 @@
 """Asynchronous Python client for Matpriskollen."""
 from .exceptions import (
-    MatpriskollenAuthenticationError,
     MatpriskollenConnectionError,
     MatpriskollenError,
     MatpriskollenResponseError,
