@@ -1,5 +1,4 @@
 import asyncio
-from typing import Self
 
 from aiohttp import ClientError, ClientResponseError, ClientSession
 from yarl import URL
@@ -12,20 +11,15 @@ from .exceptions import (
 
 
 class Matpriskollen:
-    def __init__(self, session: ClientSession | None = None, timeout: int = 10):
-        # Home Assistant passes in its own session. Without one, we create our own
-        # in _request and remember that we own it, so close() only closes ours.
+    def __init__(self, session: ClientSession, timeout: int = 10):
+        # The session is required and owned by the caller (e.g. Home Assistant).
+        # Whoever creates the session is responsible for closing it, never us.
         self.session = session
         self.timeout = timeout
-        self._close_session = False
 
     async def _request(self, uri: str, params: dict[str, str] | None = None) -> str:
-        # uri must NOT start with "/", joinpath raises ValueError on a leading slash
+        # uri must NOT start with "/" joinpath raises ValueError on a leading slash
         url = URL("https://matpriskollen.se/").joinpath(uri)
-
-        if self.session is None:
-            self.session = ClientSession()
-            self._close_session = True
 
         try:
             async with asyncio.timeout(self.timeout):
@@ -40,19 +34,6 @@ class Matpriskollen:
             raise MatpriskollenError(f"Unexpected status {err.status} for {uri}") from err
         except ClientError as err:
             raise MatpriskollenConnectionError("Error talking to Matpriskollen") from err
-
-    async def close(self) -> None:
-        # Only close a session we created ourselves, never Home Assistant's shared one
-        if self.session is not None and self._close_session:
-            await self.session.close()
-
-    # Enter "async block" are needed beacuse of the context blocks (with)
-    async def __aenter__(self) -> Self:
-        return self
-
-    # Exit "async block"
-    async def __aexit__(self, *_exc_info: object) -> None:
-        await self.close()
 
     async def getStoresFromPostalcode(self, postalcode: str) -> str:
         postalcode = "".join(postalcode.split())  # Remove all space even trailing
