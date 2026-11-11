@@ -9,15 +9,14 @@ from .exceptions import (
     MatpriskollenError,
     MatpriskollenResponseError,
 )
-from .models import Location, Store
+from .models import Location, Offer, OffersResponse, Store
 
 STORES_DECODER = ORJSONDecoder(list[Store])
 
 
 class Matpriskollen:
     def __init__(self, session: ClientSession, timeout: int = 10):
-        # The session is required and owned by the caller (e.g. Home Assistant).
-        # Whoever creates the session is responsible for closing it, never us.
+        #The session is required and owned by the caller 
         self.session = session
         self.timeout = timeout
 
@@ -55,7 +54,8 @@ class Matpriskollen:
     # async def get_stores_from_city(self, city: str) -> str:
     #     return await self._request("api/geo/local", {"city": city})
 
-    async def get_deals_from_store(self, store_id: str) -> str:
+    async def get_deals_from_store(self, store_id: str) -> list[Offer]:
         response_text = await self._request(f"api/v1/stores/{store_id}/offers")
-        
+        # The response is one object, so from_json works (no decoder needed)
+        return OffersResponse.from_json(response_text).offers
 

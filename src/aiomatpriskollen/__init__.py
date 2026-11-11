@@ -6,7 +6,7 @@ from .exceptions import (
 )
 
 from .matpriskollen import Matpriskollen
-from .models import Location, Store
+from .models import Location, Offer, Product, Store
 
 __all__ = [
     "Location",
@@ -14,5 +14,7 @@ __all__ = [
     "MatpriskollenConnectionError",
     "MatpriskollenError",
     "MatpriskollenResponseError",
+    "Offer",
+    "Product",
     "Store",
 ]
