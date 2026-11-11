@@ -1,6 +1,7 @@
 import asyncio
 
 from aiohttp import ClientError, ClientResponseError, ClientSession
+from mashumaro.codecs.orjson import ORJSONDecoder
 from yarl import URL
 
 from .exceptions import (
@@ -8,6 +9,9 @@ from .exceptions import (
     MatpriskollenError,
     MatpriskollenResponseError,
 )
+from .models import Location, Store
+
+STORES_DECODER = ORJSONDecoder(list[Store])
 
 
 class Matpriskollen:
@@ -18,7 +22,6 @@ class Matpriskollen:
         self.timeout = timeout
 
     async def _request(self, uri: str, params: dict[str, str] | None = None) -> str:
-        # uri must NOT start with "/" joinpath raises ValueError on a leading slash
         url = URL("https://matpriskollen.se/").joinpath(uri)
 
         try:
@@ -35,15 +38,24 @@ class Matpriskollen:
         except ClientError as err:
             raise MatpriskollenConnectionError("Error talking to Matpriskollen") from err
 
-    async def getStoresFromPostalcode(self, postalcode: str) -> str:
-        postalcode = "".join(postalcode.split())  # Remove all space even trailing
-        if len(postalcode) != 5 or not postalcode.isdigit():
-            raise ValueError(f"Invalid postnummer: {postalcode!r}, expected 5 digits")
+    async def get_stores_near(self, lat: float, lon: float) -> list[Store]:
+        # params must be strings, aiohttp raises TypeError on floats
+        response_text = await self._request("api/v1/stores", {"lat": str(lat), "lon": str(lon)})
+        return STORES_DECODER.decode(response_text)
+
+    async def get_stores_from_postal_code(self, postal_code: str) -> list[Store]:
+        postal_code = "".join(postal_code.split())  # Remove all space even trailing
+        if len(postal_code) != 5 or not postal_code.isdigit():
+            raise ValueError(f"Invalid postnummer: {postal_code!r}, expected 5 digits")
         # params is for api/geo/postal-code?postalCode=XXXXX
-        return await self._request("api/geo/postal-code", {"postalCode": postalcode})
+        response_text = await self._request("api/geo/postal-code", {"postalCode": postal_code})
+        location = Location.from_json(response_text)
+        return await self.get_stores_near(location.lat, location.lon)
 
-    async def getStoresFromCity(self, city: str) -> str:
-        return await self._request("api/geo/local", {"city": city})
+    # async def get_stores_from_city(self, city: str) -> str:
+    #     return await self._request("api/geo/local", {"city": city})
 
-    async def getDealsFromStore(self, storeId: str) -> str:
-        return await self._request(f"api/v1/stores/{storeId}/offers")
+    async def get_deals_from_store(self, store_id: str) -> str:
+        response_text = await self._request(f"api/v1/stores/{store_id}/offers")
+        
+

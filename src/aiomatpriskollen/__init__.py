@@ -6,10 +6,13 @@ from .exceptions import (
 )
 
 from .matpriskollen import Matpriskollen
+from .models import Location, Store
 
 __all__ = [
+    "Location",
     "Matpriskollen",
     "MatpriskollenConnectionError",
     "MatpriskollenError",
     "MatpriskollenResponseError",
+    "Store",
 ]
