@@ -3,7 +3,7 @@ name = "aiomatpriskollen"
 version = "0.0.0"
 description = "Asynchronous Python client for Matpriskollen."
 authors = [
-    {name = "Oskmey",email = "qcube.gaming@gmail.com"}
+    {name = "Oskmey"}
 ]
 license = "MIT"
 requires-python = ">=3.12"
