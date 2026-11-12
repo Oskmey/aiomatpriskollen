@@ -1,4 +1,5 @@
 import asyncio
+from typing import Any
 
 from aiohttp import ClientError, ClientResponseError, ClientSession
 from mashumaro.codecs.orjson import ORJSONDecoder
@@ -9,9 +10,10 @@ from .exceptions import (
     MatpriskollenError,
     MatpriskollenResponseError,
 )
-from .models import Location, Offer, OffersResponse, Store
+from .models import Location, Offer, Store
 
 STORES_DECODER = ORJSONDecoder(list[Store])
+OFFERS_DECODER = ORJSONDecoder(dict[str, Any])
 
 
 class Matpriskollen:
@@ -40,7 +42,12 @@ class Matpriskollen:
     async def get_stores_near(self, lat: float, lon: float) -> list[Store]:
         # params must be strings, aiohttp raises TypeError on floats
         response_text = await self._request("api/v1/stores", {"lat": str(lat), "lon": str(lon)})
-        return STORES_DECODER.decode(response_text)
+        
+        try:
+            return STORES_DECODER.decode(response_text)
+        except (ValueError, TypeError, LookupError) as err:
+            raise MatpriskollenResponseError("Invalid stores response") from err
+
 
     async def get_stores_from_postal_code(self, postal_code: str) -> list[Store]:
         postal_code = "".join(postal_code.split())  # Remove all space even trailing
@@ -56,6 +63,10 @@ class Matpriskollen:
 
     async def get_deals_from_store(self, store_id: str) -> list[Offer]:
         response_text = await self._request(f"api/v1/stores/{store_id}/offers")
-        # The response is one object, so from_json works (no decoder needed)
-        return OffersResponse.from_json(response_text).offers
+
+        try:
+            data = OFFERS_DECODER.decode(response_text)
+            return [Offer.from_dict(offer) for offer in data["offers"]]
+        except (ValueError, TypeError, LookupError, AttributeError) as err:
+            raise MatpriskollenResponseError("Invalid offers response") from err
 

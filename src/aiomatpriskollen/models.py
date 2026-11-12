@@ -42,5 +42,3 @@ class Offer(DataClassORJSONMixin):
     product_name: str = field(metadata=field_options(alias="product", deserialize=_product_name))
     brand: str = field(metadata=field_options(alias="product", deserialize=_brand))
     category: str | None = field(metadata=field_options(alias="product", deserialize=_category))
-
-
