@@ -13,7 +13,7 @@ dependencies = [
     "orjson (>=3.10.0)",
     "yarl (>=1.25.1,<2.0.0)"
 ]
-
+readme="README.md"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
